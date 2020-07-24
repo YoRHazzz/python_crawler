@@ -32,7 +32,7 @@ jobs:
         run: |
           pyinstaller `
             --onefile -c pyinstaller_clean.py
-        
+
       - name: Test pyinstaller_clean
         run: |
           python pyinstaller_clean.py
