@@ -1,0 +1,80 @@
+name: PyInstaller
+
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master, dev]
+
+jobs:
+  job1:
+    name: windows-pyinstaller
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+
+      - name: Install dependecies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Test dependecies
+        run: |
+          pip list
+
+      - name: Test pyinstaller
+        run: |
+          pyinstaller `
+            --onefile -c pyinstaller_clean.py
+        
+      - name: Test pyinstaller_clean
+        run: |
+          python pyinstaller_clean.py
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: python_crawler-windows
+          path: dist
+
+  job2:
+    name: linux-pyinstaller
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+
+      - name: Install dependecies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Test dependecies
+        run: |
+          pip list
+
+      - name: Test pyinstaller
+        run: |
+          pyinstaller \
+            --onefile pyinstaller_clean.py
+
+      - name: Test pyinstaller_clean
+        run: |
+          python pyinstaller_clean.py
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: python_crawler-linux
+          path: dist
