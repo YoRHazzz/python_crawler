@@ -2,13 +2,68 @@ from os.path import exists
 import configparser
 from multiprocessing import cpu_count
 
-default_config = {'multi': {'process_number': cpu_count(),
-                            'thread_number': cpu_count(),
-                            'delay': 0.0},
-                  'proxy': {'proxy_url': '',
-                            'timeout': 10.0,
-                            'retry': 3}
-                  }
+config_dict = {'multi': {'process_number': cpu_count(),
+                         'thread_number': cpu_count(),
+                         'delay': 0.0},
+               'proxy': {'proxy_url': '',
+                         'timeout': 10.0,
+                         'retry': 3}
+               }
+proxy_url_pattern = r"(^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])(.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])){3}" \
+                    r":" \
+                    r"([0-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-5]{2}[0-3][0-5])$)" \
+                    r"|^$"
+config_schema = {
+    "type": "object",
+    "properties": {
+        "multi": {
+            "type": "object",
+            "properties": {
+                "process_number": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50
+                },
+                "thread_number": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50
+                },
+                "delay": {
+                    "type": "number",
+                    "minimum": 0,
+                }
+            },
+            "required": [
+                "process_number", "thread_number", "delay"
+            ]
+        },
+        "proxy": {
+            "type": "object",
+            "properties": {
+                "proxy_url": {
+                    "type": "string",
+                    "pattern": proxy_url_pattern
+                },
+                "timeout": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "retry": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                }
+            },
+            "required": [
+                "proxy_url", "timeout", "retry"
+            ]
+        }
+    },
+    "required": [
+        "multi", "proxy"
+    ]
+}
 
 
 class Config:
@@ -27,8 +82,8 @@ class Config:
                         except ValueError:
                             pass
                     finally:
-                        default_config[section][key] = value
-        self.conf.read_dict(default_config)
+                        config_dict[section][key] = value
+        self.conf.read_dict(config_dict)
 
         if not self._config_legal():
             exit()
@@ -36,66 +91,12 @@ class Config:
         with open(self.path, 'w') as config_file:
             self.conf.write(config_file)
 
-    def _config_legal(self) -> bool:
+    @staticmethod
+    def _config_legal() -> bool:
         from jsonschema import validate, ValidationError, SchemaError
-        proxy_url_pattern = '(((https?|ftp|file)\:\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|])' \
-                            '|((\d{1,2}|1\d\d|2[0-4]\d|25[0-5])(\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])){3})' \
-                            '\:' \
-                            '([0-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-5]{2}[0-3][0-5]))' \
-                            '|'
-        config_schema = {
-            "type": "object",
-            "properties": {
-                "multi": {
-                    "type": "object",
-                    "properties": {
-                        "process_number": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 71
-                        },
-                        "thread_number": {
-                            "type": "integer",
-                            "minimum": 1,
-                        },
-                        "delay": {
-                            "type": "number",
-                            "minimum": 0,
-                        }
-                    },
-                    "required": [
-                        "process_number", "thread_number", "delay"
-                    ]
-                },
-                "proxy": {
-                    "type": "object",
-                    "properties": {
-                        "proxy_url": {
-                            "type": "string",
-                            "pattern": proxy_url_pattern
-                        },
-                        "timeout": {
-                            "type": "number",
-                            "exclusiveMinimum": 0
-                        },
-                        "retry": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 10000
-                        }
-                    },
-                    "required": [
-                        "timeout", "retry"
-                    ]
-                }
-            },
-            "required": [
-                "multi", "proxy"
-            ]
-        }
 
         try:
-            validate(instance=default_config, schema=config_schema)
+            validate(instance=config_dict, schema=config_schema)
         except ValidationError as e:
             print(e.path)
             print(e.message)
