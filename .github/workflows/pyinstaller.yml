@@ -75,6 +75,10 @@ jobs:
         run: |
           python pyinstaller_clean.py
 
+      - name: Test config
+        run: |
+          python ./crawler/config.py
+
       - name: Upload dist artifact
         uses: actions/upload-artifact@v2
         with:
