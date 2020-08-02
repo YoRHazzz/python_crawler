@@ -71,11 +71,11 @@ class Config:
         self.path = path
         self.config_dict = config_dict if config_dict is not None else DEFAULT_CONFIG_DICT
         self.config_schema = config_schema if config_schema is not None else DEFAULT_CONFIG_SCHEMA
-        self.conf = configparser.ConfigParser()
-        self.conf.read(path)
+        self.ini = configparser.ConfigParser()
+        self.ini.read(path)
 
-        for section in self.conf.sections():
-            for key, value in self.conf[section].items():
+        for section in self.ini.sections():
+            for key, value in self.ini[section].items():
                 if value != '':
                     try:
                         value = int(value)
@@ -86,13 +86,13 @@ class Config:
                             pass
                     finally:
                         self.config_dict[section][key] = value
-        self.conf.read_dict(self.config_dict)
+        self.ini.read_dict(self.config_dict)
 
         if not self._config_legal():
             exit()
 
         with open(self.path, 'w') as config_file:
-            self.conf.write(config_file)
+            self.ini.write(config_file)
 
     def _config_legal(self) -> bool:
         from jsonschema import validate, ValidationError, SchemaError
@@ -110,8 +110,8 @@ class Config:
         return True
 
     def list_config(self):
-        for section in self.conf.sections():
-            for key, value in self.conf[section].items():
+        for section in self.ini.sections():
+            for key, value in self.ini[section].items():
                 print(key, ": ", value)
 
 
