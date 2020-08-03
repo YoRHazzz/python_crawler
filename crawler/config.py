@@ -2,7 +2,7 @@ import configparser
 from multiprocessing import cpu_count
 
 DEFAULT_CONFIG_DICT = {'multi': {'process_number': cpu_count(),
-                                 'thread_number': cpu_count() * 5,
+                                 'thread_number': cpu_count() if cpu_count() < 5 else 5,
                                  'delay': 1.0},
                        'proxy': {'proxy_url': '',
                                  'timeout': 10.0,
