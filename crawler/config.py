@@ -2,8 +2,8 @@ import configparser
 from multiprocessing import cpu_count
 
 DEFAULT_CONFIG_DICT = {'multi': {'process_number': cpu_count(),
-                                 'thread_number': cpu_count(),
-                                 'delay': 0.0},
+                                 'thread_number': cpu_count() * 5,
+                                 'delay': 1.0},
                        'proxy': {'proxy_url': '',
                                  'timeout': 10.0,
                                  'retry': 3}
@@ -21,12 +21,10 @@ DEFAULT_CONFIG_SCHEMA = {
                 "process_number": {
                     "type": "integer",
                     "minimum": 1,
-                    "maximum": 50
                 },
                 "thread_number": {
                     "type": "integer",
                     "minimum": 1,
-                    "maximum": 50
                 },
                 "delay": {
                     "type": "number",
