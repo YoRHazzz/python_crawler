@@ -19,7 +19,7 @@ config = Config(path, config_dict, config_schema)
 根据config_dict生成位于path的配置文件, 由config_schema进行值的检查
 
 - path为.ini文件路径
-- config_dict是默认配置的内容, 如果在删除.ini中某一项=后面的内容( 保留等号), 再次执行时会被重置为默认值
+- config_dict是默认配置的内容, 如果删除.ini中某一项=后面的内容( 保留等号), Config类初始化时会被重置为默认值
 - config_schema ( jsonschema语法 ) 对值进行检查
 
 ### 显示/读写某一项的值
@@ -34,11 +34,13 @@ config.list_config()
 config.ini[section][option]
 ```
 
-像字典一样操作, 获取section内option的值, 可以输出或者更改该值
+像字典一样操作, 获取section内option的值, 可以任意操作该值
+
+**获取到的值默认是str, 需要按需求进行类型转换**
 
 ### sample
 
-sample文件夹中的config_sample.py
+Config类的例子: config_sample.py
 
 ```python
 from crawler.config import Config
