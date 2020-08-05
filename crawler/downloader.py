@@ -3,7 +3,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, wait, AL
 import time
 from crawler.url_manager import UrlManager
 import requests
-from requests.exceptions import ConnectTimeout, ReadTimeout, ConnectionError
+from requests.exceptions import ConnectTimeout, ReadTimeout
 
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
@@ -93,7 +93,7 @@ class Downloader:
 
         process_number = min(int(self.config.ini["multi"]["process_number"]), len(urls))
         thread_number = int(self.config.ini["multi"]["thread_number"])
-        thread_number = min((len(urls) // thread_number) + 1, thread_number)
+        thread_number = min((len(urls) // process_number) + 1, thread_number)
 
         process_executor = ProcessPoolExecutor(max_workers=process_number)
         process_futures = []

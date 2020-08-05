@@ -1,6 +1,5 @@
 import configparser
 from multiprocessing import cpu_count
-import os
 
 DEFAULT_CONFIG_DICT = {'multi': {'process_number': cpu_count(),
                                  'thread_number': cpu_count() if cpu_count() > 5 else 5,
