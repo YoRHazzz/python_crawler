@@ -1,8 +1,9 @@
 import configparser
 from multiprocessing import cpu_count
+import os
 
 DEFAULT_CONFIG_DICT = {'multi': {'process_number': cpu_count(),
-                                 'thread_number': cpu_count() if cpu_count() < 5 else 5,
+                                 'thread_number': cpu_count() if cpu_count() > 5 else 5,
                                  'delay': 1.0},
                        'proxy': {'proxy_url': '',
                                  'timeout': 10.0,
@@ -63,12 +64,22 @@ DEFAULT_CONFIG_SCHEMA = {
 }
 
 
+def recursive_set_dict(src_dict: dict, des_dict: dict):
+    for key in src_dict.keys():
+        if key not in des_dict:
+            des_dict[key] = src_dict[key]
+        elif isinstance(src_dict[key], dict) and isinstance(des_dict[key], dict):
+            recursive_set_dict(src_dict[key], des_dict[key])
+
+
 class Config:
     def __init__(self, path: str = "config.ini", config_dict=None
                  , config_schema=None):
         self.path = path
         self.config_dict = config_dict if config_dict is not None else DEFAULT_CONFIG_DICT
+        recursive_set_dict(DEFAULT_CONFIG_DICT, self.config_dict)
         self.config_schema = config_schema if config_schema is not None else DEFAULT_CONFIG_SCHEMA
+        recursive_set_dict(DEFAULT_CONFIG_SCHEMA, self.config_schema)
         self.ini = configparser.ConfigParser()
         self.ini.read(path)
 
@@ -112,7 +123,9 @@ class Config:
             for key, value in self.ini[section].items():
                 print(key, ": ", value)
 
-
-if __name__ == "__main__":
-    config = Config()
-    config.list_config()
+    @staticmethod
+    def make_default_ini(path: str = "default.ini"):
+        default_config = configparser.ConfigParser()
+        default_config.read_dict(DEFAULT_CONFIG_DICT)
+        with open(path, 'w') as config_file:
+            default_config.write(config_file)
