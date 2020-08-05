@@ -23,7 +23,7 @@ class Result:
         self.end_time = end_time
 
     def retry_failed_urls(self, *config: Config):
-        config = config if config is not None else self.config
+        config = config[0] if len(config) == 1 else self.config
         retry_downloader = Downloader(config)
         result = retry_downloader.get_result(self.failed_urls)
         self.urls_detail.update(result.urls_detail)
@@ -37,7 +37,7 @@ class Result:
 
 class Downloader:
     def __init__(self, *config: Config):
-        self.config = config[0] if len(config) > 0 else Config()
+        self.config = config[0] if len(config) == 1 else Config()
 
     def change_config(self, config: Config):
         self.config = config
@@ -86,9 +86,9 @@ class Downloader:
         wait(thread_futures, return_when=ALL_COMPLETED)
         return True
 
-    def get_result(self, urls: list) -> Result:
+    def get_result(self, urls: list, *url_manger: UrlManager) -> Result:
         start_time = time.time()
-        url_manager = UrlManager()
+        url_manager = url_manger[0] if len(url_manger) == 1 else UrlManager()
         url_manager.add_urls(urls)
 
         process_number = min(int(self.config.ini["multi"]["process_number"]), len(urls))
