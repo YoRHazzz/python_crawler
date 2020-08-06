@@ -1,5 +1,6 @@
 import configparser
 from multiprocessing import cpu_count
+import copy
 
 DEFAULT_CONFIG_DICT = {'multi': {'process_number': cpu_count(),
                                  'thread_number': cpu_count() if cpu_count() > 5 else 5,
@@ -131,10 +132,13 @@ class Config:
             default_config.write(config_file)
 
     def update_config(self, section: str, option: str, value):
-        config = self.config_dict
+        config = copy.deepcopy(self.config_dict)
         config[section][option] = value
         if not self._config_legal(config, self.config_schema):
             return False
         else:
             self.config_dict[section][option] = value
+            self.ini[section][option] = str(value)
+            with open(self.path, 'w') as config_file:
+                self.ini.write(config_file)
             return True
