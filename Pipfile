@@ -10,7 +10,6 @@ pyinstaller = "*"
 pytest = "*"
 jsonschema = "*"
 requests = "*"
-retrying = "*"
 
 [requires]
 python_version = "3.7"
