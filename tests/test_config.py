@@ -2,7 +2,7 @@ import pytest
 from multiprocessing import cpu_count
 from crawler.config import recursive_set_dict, Config
 import os
-from jsonschema import ValidationError
+from shutil import rmtree
 
 DEFAULT_CONFIG_DICT = {'multi': {'process_number': cpu_count(),
                                  'thread_number': cpu_count() if cpu_count() > 5 else 5,
@@ -12,11 +12,15 @@ DEFAULT_CONFIG_DICT = {'multi': {'process_number': cpu_count(),
                                  'retry': 3}
                        }
 DEFAULT_INI_PATH = "./tests/config/default.ini"
+CONFIG_DIR_PATH = "./tests/config"
 
 
 class TestConfig:
     @staticmethod
     def setup_class():
+        if os.path.exists(CONFIG_DIR_PATH):
+            rmtree(CONFIG_DIR_PATH)
+        os.mkdir(CONFIG_DIR_PATH)
         Config.make_default_ini(DEFAULT_INI_PATH)
         print("default.ini initialized")
 
@@ -50,10 +54,29 @@ class TestConfig:
         assert customize_config.ini['proxy'] == default_config.ini['proxy']
         assert customize_config.ini['customize']['use'] == '1'
 
-    @pytest.mark.parametrize("test_value, expect_return",
-                             [(0, False),
-                              (2, True)])
-    def test_illegal_config(self, test_value, expect_return):
-        illegal_config_ini_path = './tests/config/illegal_config.ini'
-        illegal_config = Config()
-        assert illegal_config.update_config("multi", "process_number", test_value) is expect_return
+    @pytest.mark.parametrize("section, option, value, expect_return",
+                             [("multi", "process_number", 0, False),
+                              ("multi", "process_number", 0.0, False),
+                              ("multi", "process_number", 2, True),
+                              ("multi", "thread_number", 0, False),
+                              ("multi", "thread_number", 0.0, False),
+                              ("multi", "thread_number", 2, True),
+                              ("multi", "delay", -1, False),
+                              ("multi", "delay", 0.0, True),
+                              ("proxy", "timeout", 0, False),
+                              ("proxy", "timeout", 0.1, True),
+                              ("proxy", "retry", -1, False),
+                              ("proxy", "retry", 101, False),
+                              ("proxy", "retry", 'a', False),
+                              ("proxy", "retry", 0, True),
+                              ("proxy", "proxy_url", '127.0.0.1:65535', True),
+                              ("proxy", "proxy_url", '127.0.0.1:65536', False),
+                              ("proxy", "proxy_url", '255.255.255.255:65535', True),
+                              ("proxy", "proxy_url", '255.255.255.256:65535', False),
+                              ])
+    def test_update_config(self, section, option, value, expect_return):
+        updated_config_ini_path = './tests/config/updated_config.ini'
+        if os.path.exists(updated_config_ini_path):
+            os.remove(updated_config_ini_path)
+        illegal_config = Config(updated_config_ini_path)
+        assert illegal_config.update_config(section, option, value) is expect_return

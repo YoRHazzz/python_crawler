@@ -1,8 +1,12 @@
 import pytest
 from crawler.core import Downloader, Config
 from crawler.url_manager import UrlManager
+import os
+from shutil import rmtree
 
 DEFAULT_INI_PATH = "./tests/config/default.ini"
+CONFIG_DIR_PATH = "./tests/config"
+
 test_failed_urls = ["http://www.google.com"]
 test_finished_urls = ["http://www.baidu.com"]
 test_repeated_urls = []
@@ -14,6 +18,9 @@ for i in range(10):
 class TestDownloader:
     @staticmethod
     def setup_class():
+        if os.path.exists(CONFIG_DIR_PATH):
+            rmtree(CONFIG_DIR_PATH)
+        os.mkdir(CONFIG_DIR_PATH)
         Config.make_default_ini(DEFAULT_INI_PATH)
         print("default.ini initialized")
 
@@ -32,6 +39,7 @@ class TestDownloader:
         self.fast_download(downloader)
 
         result = downloader.get_result(test_urls)
+        result.show_time_cost()
         assert len(result.failed_urls) == expect_failed_urls_number
         assert len(result.finished_urls) == expect_finished_urls_number
 
