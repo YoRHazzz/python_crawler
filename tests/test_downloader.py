@@ -7,12 +7,12 @@ from shutil import rmtree
 DEFAULT_INI_PATH = "./tests/config/default.ini"
 CONFIG_DIR_PATH = "./tests/config"
 
-test_failed_urls = ["http://www.google.com"]
+test_failed_urls = ["http://www.hubianluanzao2131231231.com"]
 test_finished_urls = ["http://www.baidu.com"]
 test_repeated_urls = []
 for i in range(10):
     test_repeated_urls.append("http://www.baidu.com")
-    test_repeated_urls.append("http://www.google.com")
+    test_repeated_urls.append("http://www.hubianluanzao2131231231.com")
 
 
 class TestDownloader:
