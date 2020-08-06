@@ -28,7 +28,7 @@ class Result:
         result = retry_downloader.get_result(self.failed_urls)
         self.urls_detail.update(result.urls_detail)
 
-    def show_time_result(self):
+    def show_time_cost(self):
         time_result = '\n'.join(['initialize download tasks cost: {:.2f}s'.format(self.initial_time - self.start_time),
                                  'finish download task cost: {:.2f}s'.format(self.end_time - self.initial_time),
                                  'total cost: {:.2f}s'.format(self.end_time - self.start_time)])

@@ -1,4 +1,4 @@
-name: PyInstaller
+name: Python_Crawler
 
 on:
   push:
@@ -25,7 +25,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Test dependecies
+      - name: List dependecies
         run: |
           pip list
 
@@ -34,9 +34,17 @@ jobs:
           pyinstaller `
             --onefile -c pyinstaller_clean.py
 
-      - name: Test pyinstaller_clean
+      - name: Test with pytest
         run: |
-          python pyinstaller_clean.py
+          python -m pytest tests
+
+      - name: Upload pytest test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: Python_Crawler_pytest_results-windows
+          path: |
+            htmlcov
+            tests/result
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v2
