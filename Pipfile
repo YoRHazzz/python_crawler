@@ -13,6 +13,8 @@ requests = "*"
 pytest-html = "*"
 coverage = "*"
 pytest-cov = "*"
+bs4 = "*"
+lxml = "*"
 
 [requires]
 python_version = "3.7"
