@@ -42,9 +42,8 @@ class UrlManager:
                 self.urls_status()
             self.lock.release()
             return url
-        else:
-            self.lock.release()
-            return None
+        self.lock.release()
+        return None
 
     def remove_running_url(self, urls: list, url: str, value, status=True):
         self.lock.acquire()
@@ -56,9 +55,8 @@ class UrlManager:
             self.detail_dict[url] = value
             self.lock.release()
             return True
-        else:
-            self.lock.release()
-            return False
+        self.lock.release()
+        return False
 
     def fail_url(self, url: str, e: Exception, status=True) -> bool:
         return self.remove_running_url(self.failed_urls, url, e, status)

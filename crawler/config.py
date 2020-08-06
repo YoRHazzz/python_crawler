@@ -134,11 +134,11 @@ class Config:
     def update_config(self, section: str, option: str, value):
         config = copy.deepcopy(self.config_dict)
         config[section][option] = value
-        if not self._config_legal(config, self.config_schema):
-            return False
-        else:
+        if self._config_legal(config, self.config_schema):
             self.config_dict[section][option] = value
             self.ini[section][option] = str(value)
             with open(self.path, 'w') as config_file:
                 self.ini.write(config_file)
             return True
+
+        return False

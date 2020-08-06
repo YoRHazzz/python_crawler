@@ -49,10 +49,9 @@ class Downloader:
             try:
                 req = requests.get(url, headers=HEADERS, timeout=float(self.config.ini["proxy"]["timeout"]))
             except (ConnectTimeout, ReadTimeout) as e:
-                if i >= retry:
+                i += 1
+                if i > retry:
                     raise e
-                else:
-                    i += 1
             except Exception as e:
                 raise e
             else:
