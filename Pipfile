@@ -10,6 +10,9 @@ pyinstaller = "*"
 pytest = "*"
 jsonschema = "*"
 requests = "*"
+pytest-html = "*"
+coverage = "*"
+pytest-cov = "*"
 
 [requires]
 python_version = "3.7"

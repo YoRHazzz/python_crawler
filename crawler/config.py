@@ -96,17 +96,18 @@ class Config:
                         self.config_dict[section][key] = value
         self.ini.read_dict(self.config_dict)
 
-        if not self._config_legal():
+        if not self._config_legal(self.config_dict, self.config_schema):
             exit()
 
         with open(self.path, 'w') as config_file:
             self.ini.write(config_file)
 
-    def _config_legal(self) -> bool:
+    @staticmethod
+    def _config_legal(config_dict, config_schema) -> bool:
         from jsonschema import validate, ValidationError, SchemaError
 
         try:
-            validate(instance=self.config_dict, schema=self.config_schema)
+            validate(instance=config_dict, schema=config_schema)
         except ValidationError as e:
             print(e.path)
             print(e.message)
@@ -128,3 +129,12 @@ class Config:
         default_config.read_dict(DEFAULT_CONFIG_DICT)
         with open(path, 'w') as config_file:
             default_config.write(config_file)
+
+    def update_config(self, section: str, option: str, value):
+        config = self.config_dict
+        config[section][option] = value
+        if not self._config_legal(config, self.config_schema):
+            return False
+        else:
+            self.config_dict[section][option] = value
+            return True
