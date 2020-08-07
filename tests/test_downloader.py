@@ -1,6 +1,5 @@
 import pytest
-from crawler.core import Downloader, Config
-from crawler.url_manager import UrlManager
+from crawler.core import Downloader, Config, UrlManager
 import os
 from shutil import rmtree
 
@@ -13,16 +12,16 @@ test_repeated_urls = []
 for i in range(10):
     test_repeated_urls.append("http://www.baidu.com")
     test_repeated_urls.append("http://www.hubianluanzao2131231231.com")
+test_empty_urls = []
 
 
 class TestDownloader:
     @staticmethod
-    def setup_class():
+    def setup_method():
         if os.path.exists(CONFIG_DIR_PATH):
             rmtree(CONFIG_DIR_PATH)
         os.mkdir(CONFIG_DIR_PATH)
         Config.make_default_ini(DEFAULT_INI_PATH)
-        print("default.ini initialized")
 
     @staticmethod
     def fast_download(downloader: Downloader):
@@ -58,14 +57,25 @@ class TestDownloader:
         assert len(result.failed_urls) == expect_failed_urls_number
         assert len(result.finished_urls) == expect_finished_urls_number
 
-    def test_result_retry_failed_urls(self):
-        url_manger = UrlManager()
+    def test_chinese_support(self):
+        test_gb2312_url = "https://www.biqukan.com/50_50758/"
         downloader = Downloader(Config(DEFAULT_INI_PATH))
-        self.fast_download(downloader)
+        downloader.enable_chinese_transcoding()
+        downloader.get_req(test_gb2312_url)
+        downloader.disable_chinese_transcoding()
 
-        result = downloader.get_result(test_repeated_urls, url_manger)
-        assert len(result.failed_urls) == 1
-        assert len(result.finished_urls) == 1
-        result.retry_failed_urls()
-        assert len(result.failed_urls) == 1
-        assert len(result.finished_urls) == 1
+    def test_get_result_empty_urls(self):
+        downloader = Downloader(Config(DEFAULT_INI_PATH))
+        assert downloader.get_result(test_empty_urls) is None
+
+    def test_change_config(self):
+        downloader = Downloader(Config(DEFAULT_INI_PATH))
+        customize_dict = {'multi': {'process_number': 1,
+                                    'thread_number': 1,
+                                    'delay': 2.0},
+                          'customize': {'use': 1,
+                                        'char': 'a'}
+                          }
+        customize_ini_path = './tests/config/customize_config.ini'
+        config = Config(customize_ini_path, customize_dict)
+        downloader.change_config(config)

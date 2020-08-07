@@ -4,8 +4,9 @@ import time
 from crawler.url_manager import UrlManager
 import requests
 from requests.exceptions import ConnectTimeout, ReadTimeout
-from multiprocessing import Process, SimpleQueue
+from multiprocessing import Process, SimpleQueue, Manager
 from tqdm import tqdm
+import copy
 
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
@@ -16,10 +17,13 @@ HEADERS = {
 class Result:
     def __init__(self, urls_detail: dict, finished_urls: list, failed_urls: list
                  , config: Config, start_time, initial_time, end_time):
-        self.urls_detail = urls_detail
-        self.finished_urls = finished_urls
-        self.failed_urls = failed_urls
-        self.config = config
+        self.urls_detail = Manager().dict()
+        self.urls_detail.update(urls_detail)
+        self.finished_urls = Manager().list()
+        self.finished_urls.extend(finished_urls)
+        self.failed_urls = Manager().list()
+        self.failed_urls.extend(failed_urls)
+        self.config = copy.deepcopy(config)
         self.start_time = start_time
         self.initial_time = initial_time
         self.end_time = end_time
@@ -28,7 +32,8 @@ class Result:
         if len(self.failed_urls) == 0:
             print("no failed urls")
             return True
-        config = config[0] if len(config) == 1 else self.config
+        config = copy.deepcopy(config[0] if len(config) == 1 else self.config)
+        config.list_config()
         retry_downloader = Downloader(config)
         result = retry_downloader.get_result(self.failed_urls)
         self.failed_urls = result.failed_urls
@@ -52,7 +57,7 @@ class Result:
 
 class Downloader:
     def __init__(self, *config: Config):
-        self.config = config[0] if len(config) == 1 else Config()
+        self.config = copy.deepcopy(config[0]) if len(config) == 1 else Config()
         self.chinese_support = False
 
     def enable_chinese_transcoding(self):
@@ -62,20 +67,24 @@ class Downloader:
         self.chinese_support = False
 
     def change_config(self, config: Config):
-        self.config = config
+        self.config = copy.deepcopy(config)
 
     def get_req(self, url):
         i = 0
         retry = int(self.config.ini["proxy"]["retry"])
+        proxy_url = self.config.ini["proxy"]["proxy_url"]
+        proxies = {
+            'http': 'http://' + proxy_url,
+            'https': 'https://' + proxy_url
+        } if proxy_url != '' else None
         while i <= retry:
             try:
-                req = requests.get(url, headers=HEADERS, timeout=float(self.config.ini["proxy"]["timeout"]))
-            except (ConnectTimeout, ReadTimeout) as e:
+                req = requests.get(url, headers=HEADERS, timeout=float(self.config.ini["proxy"]["timeout"]),
+                                   proxies=proxies)
+            except (ConnectTimeout, ReadTimeout, ConnectionError) as e:
                 i += 1
                 if i > retry:
                     raise e
-            except Exception as e:
-                raise e
             else:
                 assert req.status_code == 200, req.status_code
                 if self.chinese_support:
@@ -112,23 +121,23 @@ class Downloader:
             print("empty url list")
             return None
         start_time = time.time()
+        urls = copy.deepcopy(urls)
         url_manager = url_manager[0] if len(url_manager) == 1 else UrlManager()
         bar = tqdm(range(len(urls)), total=len(urls), desc="add urls", unit="url")
         for url in urls:
             url_manager.add_url(url)
             bar.update(1)
         bar.close()
-        print("add urls time cost: {:.2f}s\n".format(time.time() - start_time))
-
-        process_number = min(int(self.config.ini["multi"]["process_number"]), len(urls))
+        work_number = len(url_manager.waiting_urls)
+        process_number = min(int(self.config.ini["multi"]["process_number"]), work_number)
         thread_number = int(self.config.ini["multi"]["thread_number"])
-        thread_number = min((len(urls) // process_number) + 1, thread_number)
+        thread_number = min((work_number // process_number) + 1, thread_number)
 
         queue = SimpleQueue()
         for i in range(process_number):
             Process(target=self.download_process, args=(thread_number, url_manager, queue)).start()
         initial_time = time.time()
-        for i in tqdm(range(len(url_manager.detail_dict)), total=len(urls), desc="download urls", unit="url",
+        for i in tqdm(range(work_number), total=work_number, desc="download urls", unit="url",
                       postfix={"process": process_number, "thread": thread_number}):
             queue.get()
         print("")

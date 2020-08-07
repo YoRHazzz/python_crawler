@@ -76,9 +76,9 @@ class Config:
     def __init__(self, path: str = "config.ini", config_dict=None
                  , config_schema=None):
         self.path = path
-        self.config_dict = config_dict if config_dict is not None else DEFAULT_CONFIG_DICT
+        self.config_dict = copy.deepcopy(config_dict if config_dict is not None else DEFAULT_CONFIG_DICT)
         recursive_set_dict(DEFAULT_CONFIG_DICT, self.config_dict)
-        self.config_schema = config_schema if config_schema is not None else DEFAULT_CONFIG_SCHEMA
+        self.config_schema = copy.deepcopy(config_schema if config_schema is not None else DEFAULT_CONFIG_SCHEMA)
         recursive_set_dict(DEFAULT_CONFIG_SCHEMA, self.config_schema)
         self.ini = configparser.ConfigParser()
         self.ini.read(path)
@@ -128,13 +128,14 @@ class Config:
     def make_default_ini(path: str = "default.ini"):
         default_config = configparser.ConfigParser()
         default_config.read_dict(DEFAULT_CONFIG_DICT)
+        print(DEFAULT_CONFIG_DICT)
         with open(path, 'w') as config_file:
             default_config.write(config_file)
 
-    def update_config(self, section: str, option: str, value):
-        config = copy.deepcopy(self.config_dict)
-        config[section][option] = value
-        if self._config_legal(config, self.config_schema):
+    def update_config_and_ini(self, section: str, option: str, value):
+        updated_config = copy.deepcopy(self.config_dict)
+        updated_config[section][option] = value
+        if self._config_legal(updated_config, self.config_schema):
             self.config_dict[section][option] = value
             self.ini[section][option] = str(value)
             with open(self.path, 'w') as config_file:

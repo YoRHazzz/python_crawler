@@ -92,9 +92,9 @@ class HardworkingAvStudio:
                 pass
             else:
                 content_date = datetime.datetime.strptime(date[1].get_text(), '%Y-%m-%d').date()
-                # if content_date.__gt__(self.mini_date):
-                #     with open("hardworking_av_studio.txt", 'a+', encoding='utf-8') as file:
-                #         file.write(str(url) + ' : ' + str(content_date) + '\n')
+                if content_date.__gt__(self.mini_date):
+                    with open("hardworking_av_studio.txt", 'a+', encoding='utf-8') as file:
+                        file.write(str(url) + ' : ' + str(content_date) + '\n')
             queue.put(url)
         return True
 
