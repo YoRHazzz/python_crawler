@@ -24,58 +24,29 @@ class UrlManager:
         self.lock.release()
         return True
 
-    def add_urls(self, urls: list, status=True):
-        if status is True:
-            for url in urls:
-                self.add_url(url)
-                self.urls_status()
-        else:
-            for url in urls:
-                self.add_url(url)
-
-    def get_url(self, status=True):
+    def get_url(self):
         self.lock.acquire()
         if len(self.waiting_urls) > 0:
             url = self.waiting_urls.pop()
             self.running_urls.append(url)
-            if status is True:
-                self.urls_status()
             self.lock.release()
             return url
         self.lock.release()
         return None
 
-    def remove_running_url(self, urls: list, url: str, value, status=True):
+    def remove_running_url(self, urls: list, url: str, value):
         self.lock.acquire()
         if url in self.running_urls:
             self.running_urls.remove(url)
             urls.append(url)
-            if status is True:
-                self.urls_status()
             self.detail_dict[url] = value
             self.lock.release()
             return True
         self.lock.release()
         return False
 
-    def fail_url(self, url: str, e: Exception, status=True) -> bool:
-        return self.remove_running_url(self.failed_urls, url, e, status)
+    def fail_url(self, url: str, e: Exception) -> bool:
+        return self.remove_running_url(self.failed_urls, url, e)
 
-    def finish_url(self, url: str, req: Response, status=True) -> bool:
-        return self.remove_running_url(self.finished_urls, url, req, status)
-
-    def urls_status(self):
-        self.lock.acquire()
-        waiting = len(self.waiting_urls)
-        running = len(self.running_urls)
-        finished = len(self.finished_urls)
-        failed = len(self.failed_urls)
-        self.lock.release()
-        total = waiting + running + finished + failed
-
-        bar = '|'.join(['waiting: ' + str(waiting),
-                        'running: ' + str(running),
-                        'finished: ' + str(finished),
-                        'failed: ' + str(failed),
-                        'total: ' + str(total)])
-        print('\r' + bar + ' ' * 10, end='', flush=True)
+    def finish_url(self, url: str, req: Response) -> bool:
+        return self.remove_running_url(self.finished_urls, url, req)

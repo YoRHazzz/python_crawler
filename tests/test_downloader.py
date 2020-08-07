@@ -49,7 +49,8 @@ class TestDownloader:
                               (test_repeated_urls, 1, 1)])
     def test_customize_url_manager(self, test_urls, expect_failed_urls_number, expect_finished_urls_number):
         url_manger = UrlManager()
-        url_manger.add_urls(test_urls)
+        for url in test_urls:
+            url_manger.add_url(url)
         downloader = Downloader(Config(DEFAULT_INI_PATH))
         self.fast_download(downloader)
 

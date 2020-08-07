@@ -16,6 +16,7 @@ pytest-cov = "*"
 bs4 = "*"
 lxml = "*"
 tqdm = "*"
+pytest-repeat = "*"
 
 [requires]
 python_version = "3.7"

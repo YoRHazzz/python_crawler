@@ -32,9 +32,9 @@ jobs:
         run: |
           pip list
 
-      - name: Test pyinstaller
+      - name: pyinstaller hardworking_av_studio
         run: |
-          pyinstaller --onefile -c pyinstaller_clean.py
+          pyinstaller --onefile -c sample/hardworking_av_studio.py
 
       - name: Test with pytest
         run: |
@@ -49,8 +49,8 @@ jobs:
             tests/result
         if: ${{ always() }}
 
-      - name: Upload dist artifact ${{ matrix.os }} ${{ matrix.python-version }}
+      - name: Upload sample ${{ matrix.os }} ${{ matrix.python-version }}
         uses: actions/upload-artifact@v2
         with:
-          name: Python_Crawler ${{ matrix.os }} ${{ matrix.python-version }}
+          name: Python_Crawler-sample ${{ matrix.os }} ${{ matrix.python-version }}
           path: dist
