@@ -53,6 +53,13 @@ class Result:
 class Downloader:
     def __init__(self, *config: Config):
         self.config = config[0] if len(config) == 1 else Config()
+        self.chinese_support = False
+
+    def enable_chinese_transcoding(self):
+        self.chinese_support = True
+
+    def disable_chinese_transcoding(self):
+        self.chinese_support = False
 
     def change_config(self, config: Config):
         self.config = config
@@ -71,6 +78,9 @@ class Downloader:
                 raise e
             else:
                 assert req.status_code == 200, req.status_code
+                if self.chinese_support:
+                    if req.apparent_encoding.lower() == 'gb2312' or req.apparent_encoding.lower() == 'gbk':
+                        req.encoding = 'gb18030'
                 return req
 
     def download_thread(self, url_manager, queue):
@@ -97,7 +107,10 @@ class Downloader:
         wait(thread_futures, return_when=ALL_COMPLETED)
         return True
 
-    def get_result(self, urls: list, *url_manager: UrlManager) -> Result:
+    def get_result(self, urls: list, *url_manager: UrlManager):
+        if len(urls) == 0:
+            print("empty url list")
+            return None
         start_time = time.time()
         url_manager = url_manager[0] if len(url_manager) == 1 else UrlManager()
         bar = tqdm(range(len(urls)), total=len(urls), desc="add urls", unit="url")
@@ -105,7 +118,6 @@ class Downloader:
             url_manager.add_url(url)
             bar.update(1)
         bar.close()
-        # time.sleep(0.001)
         print("add urls time cost: {:.2f}s\n".format(time.time() - start_time))
 
         process_number = min(int(self.config.ini["multi"]["process_number"]), len(urls))
