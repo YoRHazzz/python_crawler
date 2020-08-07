@@ -32,9 +32,10 @@ jobs:
         run: |
           pip list
 
-      - name: pyinstaller hardworking_av_studio
+      - name: pyinstaller sample
         run: |
           pyinstaller --onefile -c sample/hardworking_av_studio.py
+          pyinstaller --onefile -c sample/novel_downloader.py
 
       - name: Test with pytest
         run: |
