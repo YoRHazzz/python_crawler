@@ -38,16 +38,16 @@ class TestConfig:
         recursive_set_dict(DEFAULT_CONFIG_DICT, test_dict)
         assert test_dict == result
 
+    @pytest.mark.repeat(2)
     def test_customize_config(self):
         customize_dict = {'multi': {'process_number': cpu_count(),
                                     'thread_number': cpu_count() if cpu_count() > 5 else 5,
                                     'delay': 2.0},
-                          'customize': {'use': 1}
+                          'customize': {'use': 1,
+                                        'char': 'a'}
                           }
         customize_ini_path = './tests/config/customize_config.ini'
         default_config = Config(DEFAULT_INI_PATH)
-        if os.path.exists(customize_ini_path):
-            os.remove(customize_ini_path)
         customize_config = Config(path=customize_ini_path, config_dict=customize_dict)
         customize_config.list_config()
         assert customize_config.ini['multi'] != default_config.ini['multi']
@@ -78,5 +78,16 @@ class TestConfig:
         updated_config_ini_path = './tests/config/updated_config.ini'
         if os.path.exists(updated_config_ini_path):
             os.remove(updated_config_ini_path)
-        illegal_config = Config(updated_config_ini_path)
-        assert illegal_config.update_config(section, option, value) is expect_return
+        config = Config(updated_config_ini_path)
+        assert config.update_config(section, option, value) is expect_return
+
+    def test_wrong_schema(self):
+        wrong_schema = {
+            "type": True
+        }
+        try:
+            Config(config_schema=wrong_schema)
+        except SystemExit:
+            assert True
+        else:
+            assert False
