@@ -23,10 +23,14 @@ class Result:
         self.end_time = end_time
 
     def retry_failed_urls(self, *config: Config):
+        if len(self.failed_urls) == 0:
+            print("no failed urls")
+            return True
         config = config[0] if len(config) == 1 else self.config
         retry_downloader = Downloader(config)
         result = retry_downloader.get_result(self.failed_urls)
         self.urls_detail.update(result.urls_detail)
+        return True
 
     def show_time_cost(self):
         time_result = '\n'.join(['initialize download tasks cost: {:.2f}s'.format(self.initial_time - self.start_time),

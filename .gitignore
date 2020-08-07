@@ -135,3 +135,7 @@ dmypy.json
 # pytest
 tests/config
 tests/result
+
+# data file
+sample/hardworking_av_studio.ini
+sample/hardworking_av_studio.txt
