@@ -74,27 +74,23 @@ def recursive_set_dict(src_dict: dict, des_dict: dict):
 
 class Config:
     def __init__(self, path: str = "config.ini", config_dict=None
-                 , config_schema=None):
+                 , config_schema=None, use_default_config=True):
         self.path = path
         self.config_dict = copy.deepcopy(config_dict if config_dict is not None else DEFAULT_CONFIG_DICT)
-        recursive_set_dict(DEFAULT_CONFIG_DICT, self.config_dict)
+        if use_default_config:
+            recursive_set_dict(DEFAULT_CONFIG_DICT, self.config_dict)
         self.config_schema = copy.deepcopy(config_schema if config_schema is not None else DEFAULT_CONFIG_SCHEMA)
-        recursive_set_dict(DEFAULT_CONFIG_SCHEMA, self.config_schema)
+        if use_default_config:
+            recursive_set_dict(DEFAULT_CONFIG_SCHEMA, self.config_schema)
         self.ini = configparser.ConfigParser()
         self.ini.read(path)
 
-        for section in self.ini.sections():
-            for key, value in self.ini[section].items():
-                if value != '':
-                    try:
-                        value = int(value)
-                    except ValueError:
-                        try:
-                            value = float(value)
-                        except ValueError:
-                            pass
-                    finally:
-                        self.config_dict[section][key] = value
+        if use_default_config:
+            for section in self.ini.sections():
+                for option in self.ini[section].keys():
+                    value = self.get_config(section, option)
+                    if value != '':
+                        self.config_dict[section][option] = value
         self.ini.read_dict(self.config_dict)
 
         if not self._config_legal(self.config_dict, self.config_schema):
@@ -143,3 +139,14 @@ class Config:
             return True
 
         return False
+
+    def get_config(self, section: str, option: str):
+        value = self.ini[section][option]
+        try:
+            value = int(value)
+        except ValueError:
+            try:
+                value = float(value)
+            except ValueError:
+                pass
+        return value

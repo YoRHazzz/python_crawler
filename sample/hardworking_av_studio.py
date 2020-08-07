@@ -3,6 +3,7 @@ from multiprocessing import Process, SimpleQueue, freeze_support, cpu_count
 from bs4 import BeautifulSoup
 import datetime
 import os
+import shutil
 from tqdm import tqdm
 import string
 import time
@@ -82,7 +83,7 @@ class HardworkingAvStudio:
 
     def screen_by_mini_date(self, urls: list, queue: SimpleQueue):
         for url in urls:
-            req = self.result.urls_detail[url]
+            req = self.result.get_urls_detail_dict()[url]
             soup = BeautifulSoup(req.text, features='lxml')
             soup.prettify()
             date = soup.find_all('date')
@@ -105,27 +106,28 @@ class HardworkingAvStudio:
         urls.extend(['https://www.dmmsee.zone/studio/{}{}'.format(i, word) for i in range(1, 40) for word in
                      ' ' + string.ascii_lowercase])
         urls.extend(['https://www.dmmsee.zone/studio/{}'.format(i) for i in range(40, 400)])
-        print(" config ".center(60, '*'))
+        print(" config ".center(shutil.get_terminal_size().columns, '*'))
         downloader.config.list_config()
-        print(" download urls ".center(60, '*'))
+        print(" download urls ".center(shutil.get_terminal_size().columns, '*'))
         self.result = downloader.get_result(urls)
         self.result.show_time_cost()
         self.result.show_urls_status()
-        print(" retry failed urls ".center(60, '*'))
+        print(" retry failed urls ".center(shutil.get_terminal_size().columns, '*'))
         self.result.retry_failed_urls()
         self.result.show_urls_status()
 
         if os.path.exists("hardworking_av_studio.txt"):
             os.remove("hardworking_av_studio.txt")
 
-        print(" analyzing result ".center(60, '*'))
+        print(" analyzing result ".center(shutil.get_terminal_size().columns, '*'))
         tmp_time = time.time()
-        analyzing_result_process_number = int(downloader.config.ini['multi']['analyzing_result_process_number'])
+        analyzing_result_process_number = downloader.config.get_config('multi', 'analyzing_result_process_number')
         queue = SimpleQueue()
         for i in range(analyzing_result_process_number):
-            Process(target=self.screen_by_mini_date, args=(self.result.finished_urls[i::analyzing_result_process_number]
-                                                           , queue)).start()
-        for i in tqdm(range(len(self.result.finished_urls)), total=len(self.result.finished_urls),
+            Process(target=self.screen_by_mini_date,
+                    args=(self.result.get_finished_urls()[i::analyzing_result_process_number]
+                          , queue)).start()
+        for i in tqdm(range(len(self.result.get_finished_urls())), total=len(self.result.get_finished_urls()),
                       desc="analyzing result", unit="result", postfix={"process": analyzing_result_process_number}):
             queue.get()
         print("\nanalysis completed... time cost {:.2f}s".format(time.time() - tmp_time))

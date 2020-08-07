@@ -18,8 +18,8 @@ config_schema = {
     }
 }
 if __name__ == "__main__":
-    config = Config("config_sample.ini", config_dict, config_schema)
+    config = Config("config_sample.ini", config_dict, config_schema, use_default_config=False)
     config.list_config()
     # value :  1
-    print(config.ini["sample"]["value"])
+    print(config.get_config("sample", "value"))
     # 1

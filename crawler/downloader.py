@@ -28,12 +28,22 @@ class Result:
         self.initial_time = initial_time
         self.end_time = end_time
 
-    def retry_failed_urls(self, *config: Config):
+    def get_failed_urls(self):
+        return self.failed_urls
+
+    def get_finished_urls(self):
+        return self.finished_urls
+
+    def get_urls_detail_dict(self):
+        return self.urls_detail
+
+    def retry_failed_urls(self, *new_config: Config):
         if len(self.failed_urls) == 0:
             print("no failed urls")
             return True
-        config = copy.deepcopy(config[0] if len(config) == 1 else self.config)
-        config.list_config()
+        config = copy.deepcopy(new_config[0] if len(new_config) == 1 else self.config)
+        if len(new_config) == 1:
+            config.list_config()
         retry_downloader = Downloader(config)
         result = retry_downloader.get_result(self.failed_urls)
         self.failed_urls = result.failed_urls
@@ -71,17 +81,17 @@ class Downloader:
 
     def get_req(self, url):
         i = 0
-        retry = int(self.config.ini["proxy"]["retry"])
-        proxy_url = self.config.ini["proxy"]["proxy_url"]
+        retry = self.config.get_config("proxy", "retry")
+        proxy_url = self.config.get_config("proxy", "proxy_url")
         proxies = {
             'http': 'http://' + proxy_url,
             'https': 'https://' + proxy_url
         } if proxy_url != '' else None
         while i <= retry:
             try:
-                req = requests.get(url, headers=HEADERS, timeout=float(self.config.ini["proxy"]["timeout"]),
+                req = requests.get(url, headers=HEADERS, timeout=self.config.get_config("proxy", "timeout"),
                                    proxies=proxies)
-            except (ConnectTimeout, ReadTimeout, ConnectionError) as e:
+            except (ConnectTimeout, ReadTimeout, requests.exceptions.ConnectionError) as e:
                 i += 1
                 if i > retry:
                     raise e
@@ -103,7 +113,7 @@ class Downloader:
                 url_manager.finish_url(url, req)
             finally:
                 queue.put(url)
-                time.sleep(float(self.config.ini["multi"]["delay"]))
+                time.sleep(self.config.get_config("multi", "delay"))
             url = url_manager.get_url()
         return True
 
@@ -129,8 +139,8 @@ class Downloader:
             bar.update(1)
         bar.close()
         work_number = len(url_manager.waiting_urls)
-        process_number = min(int(self.config.ini["multi"]["process_number"]), work_number)
-        thread_number = int(self.config.ini["multi"]["thread_number"])
+        process_number = min(self.config.get_config("multi", "process_number"), work_number)
+        thread_number = self.config.get_config("multi", "thread_number")
         thread_number = min((work_number // process_number) + 1, thread_number)
 
         queue = SimpleQueue()

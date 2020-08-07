@@ -39,8 +39,8 @@ class TestDownloader:
 
         result = downloader.get_result(test_urls)
         result.show_time_cost()
-        assert len(result.failed_urls) == expect_failed_urls_number
-        assert len(result.finished_urls) == expect_finished_urls_number
+        assert len(result.get_failed_urls()) == expect_failed_urls_number
+        assert len(result.get_finished_urls()) == expect_finished_urls_number
 
     @pytest.mark.parametrize("test_urls, expect_failed_urls_number, expect_finished_urls_number",
                              [(test_failed_urls, 1, 0),
@@ -54,15 +54,16 @@ class TestDownloader:
         self.fast_download(downloader)
 
         result = downloader.get_result(test_urls, url_manger)
-        assert len(result.failed_urls) == expect_failed_urls_number
-        assert len(result.finished_urls) == expect_finished_urls_number
+        assert len(result.get_failed_urls()) == expect_failed_urls_number
+        assert len(result.get_finished_urls()) == expect_finished_urls_number
 
     def test_chinese_support(self):
-        test_gb2312_url = "https://www.biqukan.com/50_50758/"
+        test_gb2312_urls = ["https://www.biqukan.com/50_50758/"]
         downloader = Downloader(Config(DEFAULT_INI_PATH))
         downloader.enable_chinese_transcoding()
-        downloader.get_req(test_gb2312_url)
+        result = downloader.get_result(test_gb2312_urls)
         downloader.disable_chinese_transcoding()
+        assert len(result.get_urls_detail_dict()) == 1
 
     def test_get_result_empty_urls(self):
         downloader = Downloader(Config(DEFAULT_INI_PATH))
