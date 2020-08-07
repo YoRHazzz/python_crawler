@@ -1,11 +1,78 @@
 from crawler.core import Downloader, Config
-from multiprocessing import Process, SimpleQueue, freeze_support
+from multiprocessing import Process, SimpleQueue, freeze_support, cpu_count
 from bs4 import BeautifulSoup
 import datetime
 import os
 from tqdm import tqdm
 import string
 import time
+
+HARDWORKING_CONFIG_DICT = {'multi': {'process_number': cpu_count(),
+                                     'analyzing_result_process_number': int(
+                                         cpu_count() // 1.5) if cpu_count() > 2 else cpu_count(),
+                                     'thread_number': cpu_count() if cpu_count() > 5 else 5,
+                                     'delay': 1.0},
+                           'proxy': {'proxy_url': '',
+                                     'timeout': 10.0,
+                                     'retry': 3}
+                           }
+PROXY_URL_PATTERN = r"(^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])(.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])){3}" \
+                    r":" \
+                    r"([0-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-5]{2}[0-3][0-5])$)" \
+                    r"|^$"
+HARDWORKING_CONFIG_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "multi": {
+            "type": "object",
+            "properties": {
+                "process_number": {
+                    "type": "integer",
+                    "minimum": 1,
+                },
+                "analyzing_result_process_number": {
+                    "type": "integer",
+                    "minimum": 1,
+                },
+                "thread_number": {
+                    "type": "integer",
+                    "minimum": 1,
+                },
+                "delay": {
+                    "type": "number",
+                    "minimum": 0,
+                }
+            },
+            "required": [
+                "process_number", "thread_number", "delay"
+            ]
+        },
+        "proxy": {
+            "type": "object",
+            "properties": {
+                "proxy_url": {
+                    "type": "string",
+                    "pattern": PROXY_URL_PATTERN
+                },
+                "timeout": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "retry": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                }
+            },
+            "required": [
+                "proxy_url", "timeout", "retry"
+            ]
+        }
+    },
+    "required": [
+        "multi", "proxy"
+    ]
+}
 
 
 class HardworkingAvStudio:
@@ -16,9 +83,6 @@ class HardworkingAvStudio:
     def screen_by_mini_date(self, urls: list, queue: SimpleQueue):
         for url in urls:
             req = self.result.urls_detail[url]
-            req.encoding = req.apparent_encoding
-            if req.encoding.lower() == 'gb2312' or req.encoding.lower() == 'gbk':
-                req.encoding = 'gb18030'
             soup = BeautifulSoup(req.text, features='lxml')
             soup.prettify()
             date = soup.find_all('date')
@@ -28,15 +92,15 @@ class HardworkingAvStudio:
                 pass
             else:
                 content_date = datetime.datetime.strptime(date[1].get_text(), '%Y-%m-%d').date()
-                if content_date.__gt__(self.mini_date):
-                    with open("hardworking_av_studio.txt", 'a+', encoding='utf-8') as file:
-                        file.write(str(url) + ' : ' + str(content_date) + '\n')
+                # if content_date.__gt__(self.mini_date):
+                #     with open("hardworking_av_studio.txt", 'a+', encoding='utf-8') as file:
+                #         file.write(str(url) + ' : ' + str(content_date) + '\n')
             queue.put(url)
         return True
 
     def start(self):
-        downloader = Downloader(Config("hardworking_av_studio.ini"))
-        process_number = int(downloader.config.ini['multi']['process_number'])
+        t1 = time.time()
+        downloader = Downloader(Config("hardworking_av_studio.ini", HARDWORKING_CONFIG_DICT, HARDWORKING_CONFIG_SCHEMA))
         urls = ['https://www.dmmsee.zone/studio/0']
         urls.extend(['https://www.dmmsee.zone/studio/{}{}'.format(i, word) for i in range(1, 40) for word in
                      ' ' + string.ascii_lowercase])
@@ -56,24 +120,23 @@ class HardworkingAvStudio:
 
         print(" analyzing result ".center(60, '*'))
         tmp_time = time.time()
-        process_number = int(process_number // 1.5) if process_number > 2 else process_number
+        analyzing_result_process_number = int(downloader.config.ini['multi']['analyzing_result_process_number'])
         queue = SimpleQueue()
-        for i in range(process_number):
-            Process(target=self.screen_by_mini_date, args=(self.result.finished_urls[i::process_number]
+        for i in range(analyzing_result_process_number):
+            Process(target=self.screen_by_mini_date, args=(self.result.finished_urls[i::analyzing_result_process_number]
                                                            , queue)).start()
         for i in tqdm(range(len(self.result.finished_urls)), total=len(self.result.finished_urls),
-                      desc="analyzing result", unit="result", postfix={"process": process_number}):
+                      desc="analyzing result", unit="result", postfix={"process": analyzing_result_process_number}):
             queue.get()
         print("\nanalysis completed... time cost {:.2f}s".format(time.time() - tmp_time))
         print(" result ".center(60, '*'))
         print("The result has been written to the current folder:",
               os.path.join(os.getcwd(), "hardworking_av_studio.txt"))
+        print("total time cost {:.2f}s".format(time.time() - t1))
         return True
 
 
 if __name__ == '__main__':
     freeze_support()
-    t1 = time.time()
     HardworkingAvStudio().start()
-    print("total time cost {:.2f}s".format(time.time() - t1))
     input("press enter to exit...")
