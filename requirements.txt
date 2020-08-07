@@ -1,0 +1,5 @@
+jsonschema
+requests
+bs4
+lxml
+tqdm
