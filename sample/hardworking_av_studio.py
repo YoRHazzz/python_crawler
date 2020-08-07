@@ -1,10 +1,11 @@
 from crawler.core import Downloader, Config
-from multiprocessing import Process, Queue, freeze_support
+from multiprocessing import Process, SimpleQueue, freeze_support
 from bs4 import BeautifulSoup
 import datetime
 import os
 from tqdm import tqdm
 import string
+import time
 
 
 class HardworkingAvStudio:
@@ -12,7 +13,7 @@ class HardworkingAvStudio:
         self.result = None
         self.mini_date = datetime.date.today()
 
-    def screen_by_mini_date(self, urls: list, queue: Queue):
+    def screen_by_mini_date(self, urls: list, queue: SimpleQueue):
         for url in urls:
             req = self.result.urls_detail[url]
             req.encoding = req.apparent_encoding
@@ -36,39 +37,43 @@ class HardworkingAvStudio:
     def start(self):
         downloader = Downloader(Config("hardworking_av_studio.ini"))
         process_number = int(downloader.config.ini['multi']['process_number'])
-
         urls = ['https://www.dmmsee.zone/studio/0']
         urls.extend(['https://www.dmmsee.zone/studio/{}{}'.format(i, word) for i in range(1, 40) for word in
                      ' ' + string.ascii_lowercase])
         urls.extend(['https://www.dmmsee.zone/studio/{}'.format(i) for i in range(40, 400)])
-        print('******************config********************')
+        print(" config ".center(60, '*'))
         downloader.config.list_config()
-        print('********************************************')
+        print(" download urls ".center(60, '*'))
         self.result = downloader.get_result(urls)
         self.result.show_time_cost()
+        self.result.show_urls_status()
+        print(" retry failed urls ".center(60, '*'))
         self.result.retry_failed_urls()
+        self.result.show_urls_status()
 
         if os.path.exists("hardworking_av_studio.txt"):
             os.remove("hardworking_av_studio.txt")
-        queue = Queue()
-        print("start analyzing...")
-        # 调试
+
+        print(" analyzing result ".center(60, '*'))
+        tmp_time = time.time()
         process_number = int(process_number // 1.5) if process_number > 2 else process_number
+        queue = SimpleQueue()
         for i in range(process_number):
             Process(target=self.screen_by_mini_date, args=(self.result.finished_urls[i::process_number]
                                                            , queue)).start()
-        p_bar = tqdm(total=len(self.result.finished_urls), desc="analyzing result", unit="result")
-        for i in range(len(self.result.finished_urls)):
+        for i in tqdm(range(len(self.result.finished_urls)), total=len(self.result.finished_urls),
+                      desc="analyzing result", unit="result", postfix={"process": process_number}):
             queue.get()
-            p_bar.update(1)
-        queue.close()
-        print("\nanalysis completed...")
-        print("********************************************")
+        print("\nanalysis completed... time cost {:.2f}s".format(time.time() - tmp_time))
+        print(" result ".center(60, '*'))
         print("The result has been written to the current folder:",
               os.path.join(os.getcwd(), "hardworking_av_studio.txt"))
-        input("press enter to exit...")
+        return True
 
 
 if __name__ == '__main__':
     freeze_support()
+    t1 = time.time()
     HardworkingAvStudio().start()
+    print("total time cost {:.2f}s".format(time.time() - t1))
+    input("press enter to exit...")
