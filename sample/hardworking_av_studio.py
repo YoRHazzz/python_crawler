@@ -106,20 +106,20 @@ class HardworkingAvStudio:
         urls.extend(['https://www.dmmsee.zone/studio/{}{}'.format(i, word) for i in range(1, 40) for word in
                      ' ' + string.ascii_lowercase])
         urls.extend(['https://www.dmmsee.zone/studio/{}'.format(i) for i in range(40, 400)])
-        print(" config ".center(shutil.get_terminal_size().columns, '*'))
+        print(" config ".center(shutil.get_terminal_size().columns - 1, '*'))
         downloader.config.list_config()
-        print(" download urls ".center(shutil.get_terminal_size().columns, '*'))
+        print(" download urls ".center(shutil.get_terminal_size().columns - 1, '*'))
         self.result = downloader.get_result(urls)
         self.result.show_time_cost()
         self.result.show_urls_status()
-        print(" retry failed urls ".center(shutil.get_terminal_size().columns, '*'))
+        print(" retry failed urls ".center(shutil.get_terminal_size().columns - 1, '*'))
         self.result.retry_failed_urls()
         self.result.show_urls_status()
 
         if os.path.exists("hardworking_av_studio.txt"):
             os.remove("hardworking_av_studio.txt")
 
-        print(" analyzing result ".center(shutil.get_terminal_size().columns, '*'))
+        print(" analyzing result ".center(shutil.get_terminal_size().columns - 1, '*'))
         tmp_time = time.time()
         analyzing_result_process_number = downloader.config.get_config('multi', 'analyzing_result_process_number')
         queue = SimpleQueue()
@@ -131,7 +131,7 @@ class HardworkingAvStudio:
                       desc="analyzing result", unit="result", postfix={"process": analyzing_result_process_number}):
             queue.get()
         print("\nanalysis completed... time cost {:.2f}s".format(time.time() - tmp_time))
-        print(" result ".center(60, '*'))
+        print(" result ".center(shutil.get_terminal_size().columns, '*'))
         print("The result has been written to the current folder:",
               os.path.join(os.getcwd(), "hardworking_av_studio.txt"))
         print("total time cost {:.2f}s".format(time.time() - t1))
