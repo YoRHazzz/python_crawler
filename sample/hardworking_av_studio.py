@@ -53,7 +53,7 @@ class HardworkingAvStudio:
         queue = Queue()
         print("start analyzing...")
         # 调试
-        process_number = process_number // 1.5 if process_number > 2 else process_number
+        process_number = int(process_number // 1.5) if process_number > 2 else process_number
         for i in range(process_number):
             Process(target=self.screen_by_mini_date, args=(self.result.finished_urls[i::process_number]
                                                            , queue)).start()
