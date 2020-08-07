@@ -97,9 +97,9 @@ class Downloader:
         wait(thread_futures, return_when=ALL_COMPLETED)
         return True
 
-    def get_result(self, urls: list, *url_manger: UrlManager) -> Result:
+    def get_result(self, urls: list, *url_manager: UrlManager) -> Result:
         start_time = time.time()
-        url_manager = url_manger[0] if len(url_manger) == 1 else UrlManager()
+        url_manager = url_manager[0] if len(url_manager) == 1 else UrlManager()
         bar = tqdm(range(len(urls)), total=len(urls), desc="add urls", unit="url")
         for url in urls:
             url_manager.add_url(url)
@@ -116,7 +116,7 @@ class Downloader:
         for i in range(process_number):
             Process(target=self.download_process, args=(thread_number, url_manager, queue)).start()
         initial_time = time.time()
-        for i in tqdm(range(len(urls)), total=len(urls), desc="download urls", unit="url",
+        for i in tqdm(range(len(url_manager.detail_dict)), total=len(urls), desc="download urls", unit="url",
                       postfix={"process": process_number, "thread": thread_number}):
             queue.get()
         print("")
