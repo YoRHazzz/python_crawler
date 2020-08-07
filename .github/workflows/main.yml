@@ -1,0 +1,57 @@
+name: Python_Crawler
+
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master, dev]
+
+jobs:
+  job1:
+    name: Python_Crawler
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: [3.7, 3.8]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependecies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_github.txt -i https://pypi.org/simple/
+
+      - name: List dependecies
+        run: |
+          pip list
+
+      - name: pyinstaller sample
+        run: |
+          pyinstaller --onefile -c sample/hardworking_av_studio.py
+          pyinstaller --onefile -c sample/novel_downloader.py
+
+      - name: Test with pytest
+        run: |
+          python -m pytest tests
+
+      - name: Upload pytest test results ${{ matrix.os }} ${{ matrix.python-version }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: Python_Crawler_pytest_results ${{ matrix.os }} ${{ matrix.python-version }}
+          path: |
+            htmlcov
+            tests/result
+        if: ${{ always() }}
+
+      - name: Upload sample ${{ matrix.os }} ${{ matrix.python-version }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: Python_Crawler-sample ${{ matrix.os }} ${{ matrix.python-version }}
+          path: dist

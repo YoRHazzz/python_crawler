@@ -1,12 +1,22 @@
 [[source]]
 name = "pypi"
-url = "https://mirrors.aliyun.com/pypi/simple/"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 verify_ssl = true
 
 [dev-packages]
 
 [packages]
 pyinstaller = "*"
+pytest = "*"
+jsonschema = "*"
+requests = "*"
+pytest-html = "*"
+coverage = "*"
+pytest-cov = "*"
+bs4 = "*"
+lxml = "*"
+tqdm = "*"
+pytest-repeat = "*"
 
 [requires]
 python_version = "3.7"
